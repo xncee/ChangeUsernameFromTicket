@@ -60,24 +60,19 @@ class Ticket():
                 publickey = resp.headers.get('ig-set-password-encryption-pub-key')
                 return publickeyid, publickey
         def login(self):
-                self.username = input("</> username: ")
-                password = input("</> password: ")
-                head = {
-                        "User-Agent": f'Instagram 135.0.0.00.000 (iPhone12,12; iPhone OS 12; en_US; en) AppleWebKit/600',
-                        "Content-Type": 'application/x-www-form-urlencoded; charset=UTF-8'
-                }
+                self.username = input("</> Username: ")
+                password = input("</> Password: ")
+                head = {"User-Agent": f'Instagram 135.0.0.00.000 (iPhone12,12; iPhone OS 12; en_US; en) AppleWebKit/600'}
                 data = {
                         'guid': guid,
                         'password': password,
                         'username': self.username,
                         'device_id': f"android-{device_id}",
-                        'from_reg': 'false',
-                        '_csrftoken': 'missing',
                         'login_attempt_count': '0'
                 }
                 req = requests.post("https://i.instagram.com/api/v1/accounts/login/", headers=head, data=data)
                 if "logged_in_user" in req.text:
-                        print(f'</> logged in "{self.username}"')
+                        print(f'</> Logged In "{self.username}"')
                         self.coo = req.cookies
                 elif "Incorrect Username" in req.text:
                         print("<!> The username you entered doesn't belong to an account. Please check your username and try again.")
@@ -89,9 +84,8 @@ class Ticket():
                         exit()
                 elif 'checkpoint_challenge_required' in req.text:
                         print("<!> checkpoint_required")
-                        coo = req.cookies
-                        info = requests.get(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}",
-                                            headers=head, cookies=coo)
+                        self.coo = req.cookies
+                        info = requests.get(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head, cookies=self.coo)
                         if "step_data" not in info.text:
                                 print(f"<!> {info.text}")
                                 input()
@@ -106,31 +100,27 @@ class Ticket():
                                 print("<!> unknown verification method")
                                 input()
                                 exit()
-                        choice = input('</> choice: ')
+                        choice = input('</> Choice: ')
                         secure_data = {
                                 'choice': str(choice),
-                                '_uuid': uuid.uuid4(),
-                                '_uid': uuid.uuid4(),
+                                '_uuid': guid,
+                                '_uid': guid,
                                 '_csrftoken': 'massing'}
-                        send_choice = requests.post(
-                                f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head,
-                                data=secure_data, cookies=coo)
+                        send_choice = requests.post(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head, data=secure_data, cookies=self.coo)
                         if "step_data" not in send_choice.text:
                                 print(f"<!> {send_choice.text}")
                                 input()
                                 exit()
-                        print(f'</> code sent to: "{send_choice.json()["step_data"]["contact_point"]}"')
-                        code = input("</> code: ")
+                        print(f'</> Code Sent To: "{send_choice.json()["step_data"]["contact_point"]}"')
+                        code = input("</> Code: ")
                         code_data = {
                                 'security_code': str(code),
-                                '_uuid': uuid.uuid4(),
-                                '_uid': uuid.uuid4(),
+                                '_uuid': guid,
+                                '_uid': guid,
                                 '_csrftoken': 'massing'}
-                        send_code = requests.post(
-                                f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head,
-                                data=code_data, cookies=coo)
+                        send_code = requests.post(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head, data=code_data, cookies=self.coo)
                         if "logged_in_user" in send_code.text:
-                                print(f'</> logged in "{self.username}"')
+                                print(f'</> Logged In "{self.username}"')
                                 self.coo = req.cookies
                         else:
                                 print(f'<!> {send_code.text}')
@@ -157,7 +147,7 @@ class Ticket():
                         self.challenge_context = self.info.json()['challenge_context']
                         self.cni = self.info.json()['cni']
                         self.nonce_code = self.info.json()['nonce']
-                except ValueError:
+                except:
                         print(f"<!> {self.info.text}")
                         input()
                         exit()
@@ -175,8 +165,19 @@ class Ticket():
                 }
                 steps = requests.post(self.url, headers=self.head, data=data)
                 #print(steps.text)
+                if "Help Us Recover Your Account" in steps.text:
+                        if r'"Email\"' in steps.text:
+                                self.email = steps.text.split(r'"Email\"')[1].split(r'\")\", \"-\"), (bk.action.array.Make, \"')[1].split(r'\", \"16sp\"))))),')[0].replace(r"\\u2022","•")
+                                print(f"<0> {self.email}")
+                        if 'Phone Number' in steps.text:
+                                self.phone = steps.text.split(r'"Phone Number\"')[1].split(r'\")\", \"-\"), (bk.action.array.Make, \"')[1].split(r'\", \"16sp\"))))),')[0].replace(r"\\u2022","•")
+                                print(f"<1> {self.phone}")
+                else:
+                        print("<!> Error, 'get_steps'")
+                        input()
+                        exit()
         def send_choice(self):
-                choice = input("</> choice: ")
+                choice = input("</> Choice: ")
                 data = {
                         "choice": str(choice),
                         "_csrftoken": f'{self.coo.get("csrftoken")}',
@@ -190,7 +191,8 @@ class Ticket():
                 if "It may take up to a minute for you to receive this code" in req.text:
                         print("</> Code Sent")
                 elif "Select a valid choice" in req.text:
-                        print(f"<!> Select a valid choice. {choice} is not one of the available choices")
+                        print(f"<!> Select a valid choice. {choice} is not one of the available choices.")
+                        print("<!> Try: '2' for email, '3' for phone_number.")
                         input()
                         exit()
                 else:
@@ -209,19 +211,37 @@ class Ticket():
                         "bloks_versioning_id": 'e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931'
                 }
                 req = requests.post(self.url, headers=self.head, data=data)
-                if "Please check the code we sent you and try again" in req.text:
-                  print("<!> Please check the code we sent you and try again.")
-                  input()
-                  exit()
-                self.contact = req.text.split(r'\"1\", \"\", \"')[1].split(r'\"))))))')[0]
-                self.confirm_mode = input(f"</> Do You Want To Confirm This Contact '{self.contact}' (Y/N): ")
-        def confirm_contact(self):
+                if "Confirm Your Email" in req.text:
+                        print("</> Code Is True")
+                elif "Please check the code we sent you and try again" in req.text:
+                          print("<!> Please check the code we sent you and try again.")
+                          input()
+                          exit()
+                else:
+                        print("<!> Error, 'send_code'")
+                        input()
+                        exit()
+                try:
+                        self.contact1 = req.text.split(r', (bk.action.bool.Const, false), \"1\", \"\", \"')[1].split(r'\")))))),')[0]
+                        #print(self.contact1)
+                except Exception as err:
+                        print("<!> Error, 'contact1'")
+                        input()
+                        exit()
+                if self.contact1=="":
+                        self.confirm_mode = input("</> Confirm New Email (Y/N): ")
+                        if self.confirm_mode.lower()=='y':
+                                self.contact1 = input("</> New Email: ")
+                else:
+                        self.confirm_mode = input(f"</> Confirm '{self.contact1}' (Y/N): ")
+
+        def confirm_contact(self, contact_point):
                 data = {
                         "_csrftoken": f'{self.coo.get("csrftoken")}',
                         "is_bloks_web": 'False',
                         "skip": '0',
                         "type": self.type,
-                        "contact_point": f'{self.contact}',
+                        "contact_point": f'{contact_point}',
                         "bk_client_context": '{"bloks_version":"e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931","styles_id":"instagram"}',
                         "nest_data_manifest": 'true',
                         "challenge_context": f"{self.challenge_context}",
@@ -229,7 +249,32 @@ class Ticket():
                 }
                 self.confirm_req = requests.post(self.url, headers=self.head, data=data)
                 #print(self.confirm_req.text)
-                #if
+                if any(success in self.confirm_req.text for success in self.success_confirm):
+                        print(f"</> {contact_point} Confirmed")
+                elif "It may take up to a minute for you to receive this code" in self.confirm_req.text:
+                        print(f"</> Code Sent To {contact_point}")
+                        self.code = input("</> Code: ")
+                        data = {
+                                "security_code": str(self.code),
+                                "_csrftoken": f'{self.coo.get("csrftoken")}',
+                                "is_bloks_web": 'False',
+                                "bk_client_context": '{"bloks_version":"e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931","styles_id":"instagram"}',
+                                "nest_data_manifest": 'true',
+                                "challenge_context": f"{self.challenge_context}",
+                                "bloks_versioning_id": 'e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931'
+                        }
+                        req = requests.post(self.url, headers=self.head, data=data)
+                        if any(success in req.text for success in self.success_confirm):
+                                print("</> Code Is True")
+                                print(f"</> {contact_point} Confirmed")
+                        elif "Please check the code we sent you and try again" in req.text:
+                                print("<!> Please check the code we sent you and try again.")
+                                input()
+                                exit()
+                        else:
+                                print("<!> Error, 'send_code'")
+                                input()
+                                exit()
         def skip_contact(self):
                 data = {
                         "_csrftoken": f'{self.coo.get("csrftoken")}',
@@ -242,17 +287,33 @@ class Ticket():
                         "bloks_versioning_id": 'e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931'
                 }
                 self.skip_req = requests.post(self.url, headers=self.head, data=data)
-                #print(self.skip_req.text)
+                if any(success in self.skip_req.text for success in self.success_confirm):
+                        print("</> Skipped")
+                else:
+                        #print(self.skip_req.text)
+                        print("<!> Error, 'skip_contact'")
+                        input()
+                        exit()
+
         def confirm(self):
+                self.success_confirm = ["Add New Phone Number", "Confirm Your Phone Number", "Change Your Password"]
                 if self.confirm_mode.lower()=='y':
                         self.type = "email"
-                        self.confirm_contact()
+                        self.confirm_contact(self.contact1)
                         self.skip_contact()
                 elif self.confirm_mode.lower()=='n':
                         self.skip_contact()
-                        self.contact = self.skip_req.text.split(r'\"1\", \"\", \"')[1].split(r'\"))))))')[0]
+                        self.contact2 = self.skip_req.text.split(r', (bk.action.bool.Const, false), \"1\", \"\", \"')[1].split(r'\")))))),')[0]
                         self.type = "phone_number"
-                        self.confirm_contact()
+                        if self.contact2=="":
+                                self.contact2 = input("</> New PhoneNumber (ex: JO +962•••••••••): ")
+                                self.confirm_contact(self.contact2)
+                        else:
+                                self.confirm_contact(self.contact2)
+                else:
+                        print(f"<!> '{self.confirm_mode}' is not one of the available choices.")
+                        input()
+                        exit()
         def change_password(self):
                 new_password = input("</> New Password: ")
                 data = {
@@ -266,10 +327,19 @@ class Ticket():
                         "enc_new_password2": self.password_encrypt(new_password)
                 }
                 req = requests.post(self.url, headers=self.head, data=data, cookies=self.coo)
-                print(req.text)
+                if "review_profile" in req.text:
+                        print("</> Password Changed")
+                elif "Create a password at least 6 characters long" in req.text:
+                        print("<!> Create a password at least 6 characters long.")
+                        input()
+                        exit()
+                else:
+                        print(f"<!> Error, 'change_password'")
+                        input()
+                        exit()
         def edit_profile(self):
-                new_username = input("New Username: ")
-                autopy.alert.alert(f"Target: {new_username}\nAre You Ready? ")
+                new_username = input("</> New Username: ")
+                autopy.alert.alert(f"{new_username}, Are You Ready? ", "xnce")
                 data = {
                         "external_url": '',
                         "_csrftoken": f'{self.coo.get("csrftoken")}',
@@ -283,8 +353,14 @@ class Ticket():
                         "bloks_versioning_id": 'e097ac2261d546784637b3df264aa3275cb6281d706d91484f43c207d6661931'
                 }
                 req = requests.post(self.url, headers=self.head, data=data)
-                if req.status_code==200:
+                #print(req.text)
+                if req.status_code==200 or new_username in req.text:
                         print("<!> Username Changed Successfully! ")
+                        input()
+                        exit()
+                else:
+                        #print(req.text)
+                        print("<!> Error, 'change_username'")
                         input()
                         exit()
 Ticket()
