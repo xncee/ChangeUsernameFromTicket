@@ -173,7 +173,7 @@ class Ticket():
                                 self.phone = steps.text.split(r'"Phone Number\"')[1].split(r'\")\", \"-\"), (bk.action.array.Make, \"')[1].split(r'\", \"16sp\"))))),')[0].replace(r"\\u2022","•")
                                 print(f"<1> {self.phone}")
                 else:
-                        print("<!> Error, 'get_steps'")
+                        print(f"<!> Error, 'get_steps', '{steps.status_code}'")
                         input()
                         exit()
         def send_choice(self):
@@ -191,12 +191,14 @@ class Ticket():
                 if "It may take up to a minute for you to receive this code" in req.text:
                         print("</> Code Sent")
                 elif "Select a valid choice" in req.text:
-                        print(f"<!> Select a valid choice. {choice} is not one of the available choices.")
-                        print("<!> Try: '2' for email, '3' for phone_number.")
+                        if choice=='0' or choice=='1':
+                              print("<!> '2' for email, '3' for phone_number.")
+                        else:
+                              print("<!> '0' for email, '1' for phone_number.")
                         input()
                         exit()
                 else:
-                        print("<!> Error, 'send_choice'")
+                        print(f"<!> Error, 'send_choice', '{req.status_code}'")
                         input()
                         exit()
         def send_code(self):
@@ -218,7 +220,7 @@ class Ticket():
                           input()
                           exit()
                 else:
-                        print("<!> Error, 'send_code'")
+                        print(f"<!> Error, 'send_code', '{req.status_code}'")
                         input()
                         exit()
                 try:
@@ -272,7 +274,7 @@ class Ticket():
                                 input()
                                 exit()
                         else:
-                                print("<!> Error, 'send_code'")
+                                print(f"<!> Error, 'send_code', '{req.status_code}'")
                                 input()
                                 exit()
         def skip_contact(self):
@@ -291,7 +293,7 @@ class Ticket():
                         print("</> Skipped")
                 else:
                         #print(self.skip_req.text)
-                        print("<!> Error, 'skip_contact'")
+                        print(f"<!> Error, 'skip_contact', '{self.skip_req.status_code}'")
                         input()
                         exit()
 
@@ -306,7 +308,7 @@ class Ticket():
                         self.contact2 = self.skip_req.text.split(r', (bk.action.bool.Const, false), \"1\", \"\", \"')[1].split(r'\")))))),')[0]
                         self.type = "phone_number"
                         if self.contact2=="":
-                                self.contact2 = input("</> New PhoneNumber (ex: JO +962•••••••••): ")
+                                self.contact2 = input("</> New PhoneNumber (ex: +962•••••••••): ")
                                 self.confirm_contact(self.contact2)
                         else:
                                 self.confirm_contact(self.contact2)
@@ -334,7 +336,7 @@ class Ticket():
                         input()
                         exit()
                 else:
-                        print(f"<!> Error, 'change_password'")
+                        print(f"<!> Error, 'change_password', '{req.status_code}'")
                         input()
                         exit()
         def edit_profile(self):
@@ -360,7 +362,7 @@ class Ticket():
                         exit()
                 else:
                         #print(req.text)
-                        print("<!> Error, 'change_username'")
+                        print(f"<!> Error, 'change_username', '{req.status_code}'")
                         input()
                         exit()
 Ticket()
