@@ -103,8 +103,8 @@ class Ticket():
                         choice = input('[+] Choice: ')
                         secure_data = {
                                 'choice': str(choice),
-                                '_uuid': guid,
-                                '_uid': guid,
+                                'guid': guid,
+                                'device_id': f"android-{device_id}",
                                 '_csrftoken': 'massing'}
                         send_choice = requests.post(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head, data=secure_data, cookies=self.coo)
                         if "step_data" not in send_choice.text:
@@ -115,8 +115,8 @@ class Ticket():
                         code = input("[+] Code: ")
                         code_data = {
                                 'security_code': str(code),
-                                '_uuid': guid,
-                                '_uid': guid,
+                                'guid': guid,
+                                'device_id': f"android-{device_id}",
                                 '_csrftoken': 'massing'}
                         send_code = requests.post(f"https://i.instagram.com/api/v1{req.json()['challenge']['api_path']}", headers=head, data=code_data, cookies=self.coo)
                         if "logged_in_user" in send_code.text:
